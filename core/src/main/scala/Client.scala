@@ -27,6 +27,7 @@ case class ClientOptions(
   ioThreads: Int = Math.min(Runtime.getRuntime.availableProcessors, 2),
   tcpNoDelay: Boolean = true,
   bufferSize: Option[Int] = None,
+  protocols: Set[String] = Set(HTTP),
   debug: Option[String] = None
 )
 
@@ -90,7 +91,7 @@ trait Client extends Service {
           channel.config.setSendBufferSize(size)
         }
         Option(scheme).filter(_ == "https").foreach { _ =>
-          channel.pipeline.addLast("SSL", ssl.ctx.newHandler(channel.alloc()))
+          channel.pipeline.addLast("SSL", ssl.builder.build().newHandler(channel.alloc()))
         }
       }
     })
@@ -143,7 +144,13 @@ trait Client extends Service {
         liveConnections.incrementAndGet()
         KillableFuture(
           nettyClient.connect().
-            map(c => Netty.clientConnection(c.asInstanceOf[SocketChannel], options.debug)).
+            map { channel =>
+              Netty.clientConnection(
+                channel.asInstanceOf[SocketChannel],
+                options.debug,
+                if(options.protocols.contains(HTTP2) && !options.protocols.contains(HTTP)) HTTP2 else HTTP
+              )
+            }.
             andThen {
               case Success(c) =>
                 if(!connections.offer(c)) Panic.!!!()

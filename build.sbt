@@ -1,4 +1,4 @@
-val VERSION = "0.6.1"
+val VERSION = "0.7.0"
 
 lazy val commonSettings = Seq(
   organization := "com.criteo.lolhttp",
@@ -17,6 +17,7 @@ lazy val commonSettings = Seq(
     "-Xfuture",
     "-Ywarn-unused-import"
   ),
+  maxErrors := 3,
 
   // Tests
   fork in Test := true,
@@ -89,7 +90,7 @@ lazy val lolhttp =
 
     libraryDependencies ++= Seq(
       "co.fs2" %% "fs2-core" % "0.10.0-M4",
-      "io.netty" % "netty-codec-http2" % "4.1.11.Final",
+      "io.netty" % "netty-codec-http2" % "4.1.13.Final",
       "org.scalatest" %% "scalatest" % "3.0.1" % "test"
     ),
 
@@ -154,6 +155,9 @@ lazy val examples: Project =
 
     publishArtifact := false,
     fork in IntegrationTest := true,
+    // Running integration tests requires to install the right version of alpn-boot.
+    // See http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-starting
+    javaOptions in IntegrationTest += s"-Xbootclasspath/p:${file("alpn-boot.jar").getAbsolutePath}",
     connectInput in IntegrationTest := true
   ).
   settings(

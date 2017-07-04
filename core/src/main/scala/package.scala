@@ -37,6 +37,9 @@ package object http {
   /** A partial service is not defined for all [[Request]]. */
   type PartialService = PartialFunction[Request,Future[Response]]
 
+  val HTTP = "HTTP/1.1"
+  val HTTP2 = "HTTP/2"
+
   /** GET HTTP method. */
   val GET = HttpMethod("GET")
 
